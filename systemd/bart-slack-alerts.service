@@ -5,4 +5,4 @@ After=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=%h/.config/bart-alerts/env
-ExecStart=%h/bin/bart-slack-alerts.py
+ExecStart=%h/.local/bin/bart-slack-alerts.py
