@@ -2,6 +2,7 @@
 
 Posts new [BART](https://www.bart.gov/) service advisories to a Slack channel.
 One stdlib-only Python script, run every 5 minutes by a systemd user timer.
+Run it on one machine: the record of what has been posted is local, so two hosts post everything twice.
 
 ## Webhook URL
 
@@ -36,6 +37,7 @@ curl -s -X POST -H 'Content-Type: application/json' --data '{"text":"test"}' "$B
 - Each advisory is keyed by its BART id plus a hash of its text, so a repeat posts once and a reworded update posts again.
 - Seen keys are forgotten after 30 days. State lives in `~/.local/state/bart-slack-alerts.json` (`BART_STATE_FILE` overrides).
 - If Slack fails mid-run, the advisories already posted are still recorded, so nothing posts twice.
+- Each post is logged to stdout, so `journalctl --user -u bart-slack-alerts` shows what went out.
 
 ## BART API quirks
 
