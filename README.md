@@ -6,12 +6,12 @@ One stdlib-only Python script, run every 5 minutes by a systemd user timer.
 ## Install
 
 ```bash
-install -Dm755 bart-slack-alerts.py ~/bin/bart-slack-alerts.py
+install -Dm755 bart-slack-alerts.py ~/.local/bin/bart-slack-alerts.py
 install -Dm600 env.example ~/.config/bart-alerts/env   # then set your Slack incoming webhook URL
 cp systemd/bart-slack-alerts.{service,timer} ~/.config/systemd/user/
 
 set -a; . ~/.config/bart-alerts/env; set +a
-~/bin/bart-slack-alerts.py --seed      # mark current advisories as seen, so the first run posts nothing old
+~/.local/bin/bart-slack-alerts.py --seed      # mark current advisories as seen, so the first run posts nothing old
 systemctl --user daemon-reload
 systemctl --user enable --now bart-slack-alerts.timer
 ```
