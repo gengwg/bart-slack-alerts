@@ -1,6 +1,5 @@
 [Unit]
 Description=Post new BART service advisories to Slack
-After=network-online.target
 
 [Service]
 Type=oneshot

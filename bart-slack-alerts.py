@@ -20,7 +20,7 @@ import json
 import os
 import sys
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 # BART publishes this key openly for public use of the legacy API.
 API = "https://api.bart.gov/api/bsa.aspx?cmd=bsa&key=MW9S-E7SL-26DU-VV8V&json=y"
@@ -50,8 +50,6 @@ def advisories():
         if "@id" not in e:  # quiet-day placeholder, e.g. "No advisories issued."
             continue
         text = e["description"]["#cdata-section"].strip()
-        if "no delays reported" in text.lower():
-            continue
         key = f"{e['@id']}:{hashlib.sha1(text.encode()).hexdigest()[:8]}"
         out.append((key, e.get("type", "ADVISORY"), text, e.get("posted", "")))
     return out
@@ -75,10 +73,14 @@ def main():
     if not webhook and not (dry or seed):
         sys.exit("BART_SLACK_WEBHOOK is not set.")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     try:
-        seen = json.load(open(STATE))
+        with open(STATE) as f:
+            seen = json.load(f)
     except FileNotFoundError:
+        seen = {}
+    except ValueError:
+        print(f"{STATE} is not valid JSON; starting fresh", file=sys.stderr)
         seen = {}
     seen = {
         k: v
@@ -97,12 +99,18 @@ def main():
                 continue
             if not seed:
                 post(webhook, kind, text, posted)
+                print(f"posted {key}: {text[:80]}")
             seen[key] = now.isoformat()
     finally:
         # Record whatever landed, so a mid-run Slack failure cannot re-post.
+        # Write to a temp file and rename, so a kill mid-write cannot leave a
+        # half-written file that fails to parse on every later run.
         if not dry:
             os.makedirs(os.path.dirname(STATE), exist_ok=True)
-            json.dump(seen, open(STATE, "w"))
+            tmp = STATE + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(seen, f)
+            os.replace(tmp, STATE)
 
 
 if __name__ == "__main__":
